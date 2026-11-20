@@ -150,7 +150,7 @@
                 <button id="btn-tab-caselog" onclick="switchTab('caselog')" class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition cursor-pointer">
                     <i data-lucide="list-checks" class="w-4 h-4"></i>
                     <span>ตารางบันทึกเคสงาน (Case Log)</span>
-                    <span id="nav-case-count" class="ml-1 px-2 py-0.5 text-xs rounded-full bg-slate-700 text-slate-200">5</span>
+                    <span id="nav-case-count" class="ml-1 px-2 py-0.5 text-xs rounded-full bg-slate-700 text-slate-200">6</span>
                 </button>
             </div>
         </div>
@@ -185,7 +185,7 @@
                         <h2 class="text-base">ข้อมูลหัวรายงาน (Report Header — คลิกแก้ไขข้อความได้)</h2>
                     </div>
                     <span class="text-xs text-slate-400 flex items-center gap-1">
-                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-500"></i> บันทึกอัตโนมัติในเครื่อง
+                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-500"></i> บันทึกอัตโนมัติ
                     </span>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -463,15 +463,92 @@
     <footer class="bg-white border-t border-slate-200 py-4 mt-auto no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
             <p>IT Support Weekend Portal — Designed for <strong>Pacifica Group & PlantDigi</strong></p>
-            <p>ข้อมูลทั้งหมดถูกจัดเก็บในเบราว์เซอร์ของคุณ (Local Storage) สามารถเปิดใช้งานแบบ Offline ได้ 100%</p>
+            <div class="flex flex-wrap items-center gap-2">
+                <span id="cloud-status-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-600">
+                    <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                    <span id="cloud-status-text">Local Mode (เครื่องนี้เท่านั้น)</span>
+                </span>
+                <button type="button" onclick="openCloudConfigModal()" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-700 font-medium transition cursor-pointer">
+                    ตั้งค่า Cloud Sync
+                </button>
+            </div>
         </div>
     </footer>
+
+    <!-- =====================================================================
+         MODAL: CLOUD SYNC CONFIGURATION (FIREBASE FIRESTORE)
+         ===================================================================== -->
+    <div id="cloud-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto no-print">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden my-8">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-1.5 rounded-lg bg-teal-600">
+                        <i data-lucide="cloud" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold">ตั้งค่าฐานข้อมูลคลาวด์แบบเรียลไทม์ (Cloud Sync)</h3>
+                        <p class="text-[11px] text-slate-400">เปิดดูและอัปเดตเคสเดียวกันจากหลายเครื่องได้ (ฟรีบน Firebase Spark Plan)</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCloudConfigModal()" class="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="cloud-config-form" onsubmit="handleSaveCloudConfig(event)" class="p-6 space-y-4">
+                <div class="bg-teal-50/80 border border-teal-200/80 rounded-xl p-3.5 text-xs text-slate-700 space-y-1">
+                    <p class="font-semibold text-teal-900">วิธีรับค่า Config แบบฟรี (ใช้เวลาประมาณ 3 นาที):</p>
+                    <p>1. ไปที่ <span class="font-semibold">console.firebase.google.com</span> แล้วสร้างโปรเจกต์ใหม่ (แพ็กเกจ Spark ฟรี)</p>
+                    <p>2. สร้าง <span class="font-semibold">Firestore Database</span> (เลือก Test mode สำหรับเริ่มต้นใช้งานภายในทีม)</p>
+                    <p>3. ไปที่ <span class="font-semibold">Project settings &gt; Your apps &gt; Web (&lt;/&gt;)</span> แล้วนำค่ามาวางด้านล่าง</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อห้อง / ทีม (Team / Room ID)</label>
+                    <input type="text" id="cloud-room-id" value="pacifica-weekend-it" required placeholder="เช่น pacifica-weekend-it" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">apiKey *</label>
+                        <input type="text" id="cloud-api-key" required placeholder="AIzaSy..." class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">projectId *</label>
+                        <input type="text" id="cloud-project-id" required placeholder="your-project-id" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">authDomain (ไม่บังคับ)</label>
+                        <input type="text" id="cloud-auth-domain" placeholder="your-project.firebaseapp.com" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">appId (ไม่บังคับ)</label>
+                        <input type="text" id="cloud-app-id" placeholder="1:123456:web:abcdef" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                    <button type="button" onclick="disableCloudSync()" class="px-3.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer">
+                        ปิด Cloud Sync (ใช้เฉพาะเครื่องนี้)
+                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="closeCloudConfigModal()" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+                            ยกเลิก
+                        </button>
+                        <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-500 rounded-xl shadow-sm transition cursor-pointer">
+                            เชื่อมต่อและซิงก์ข้อมูล
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- =====================================================================
          MODAL: ADD / EDIT CASE FORM
          ===================================================================== -->
     <div id="case-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto no-print">
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden my-8 animate-fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden my-8">
             <!-- Modal Header -->
             <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
@@ -496,7 +573,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">เลขที่ Ticket (GLPI) *</label>
-                        <input type="text" id="form-ticket" required placeholder="เช่น #2611-006" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <input type="text" id="form-ticket" required placeholder="เช่น #2611-007" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">ผู้รับผิดชอบ</label>
@@ -591,12 +668,16 @@
     </div>
 
     <!-- =====================================================================
-         APPLICATION LOGIC (JavaScript)
+         APPLICATION LOGIC (JavaScript Module with Cloud Sync + LocalStorage)
          ===================================================================== -->
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         // Storage Keys (bumped to v3 so new default staff & recipient apply immediately)
         const STORAGE_KEY_CASES = 'pacifica_it_weekend_cases_v3';
         const STORAGE_KEY_META = 'pacifica_it_weekend_meta_v3';
+        const STORAGE_KEY_CLOUD = 'pacifica_it_weekend_cloud_v1';
 
         // Default Sample Data tailored to Pacifica Group & PlantDigi (6 Categories)
         const DEFAULT_CASES = [
@@ -697,13 +778,214 @@
         let cases = [];
         let categoryChartInstance = null;
         let locationChartInstance = null;
+        let cloudDb = null;
+        let cloudDocRef = null;
+        let unsubscribeCloud = null;
+        let isApplyingRemoteSnapshot = false;
+
+        // Expose functions invoked by inline HTML event handlers
+        window.switchTab = switchTab;
+        window.openCaseModal = openCaseModal;
+        window.closeCaseModal = closeCaseModal;
+        window.handleCaseSubmit = handleCaseSubmit;
+        window.quickChangeStatus = quickChangeStatus;
+        window.confirmDeleteCase = confirmDeleteCase;
+        window.confirmResetData = confirmResetData;
+        window.closeConfirmModal = closeConfirmModal;
+        window.handleDateRangeChange = handleDateRangeChange;
+        window.clearDateRangeFilter = clearDateRangeFilter;
+        window.saveMetadata = saveMetadata;
+        window.renderCaseTable = renderCaseTable;
+        window.exportCSV = exportCSV;
+        window.printReport = printReport;
+        window.openCloudConfigModal = openCloudConfigModal;
+        window.closeCloudConfigModal = closeCloudConfigModal;
+        window.handleSaveCloudConfig = handleSaveCloudConfig;
+        window.disableCloudSync = disableCloudSync;
 
         // Initialize App on Load
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
             lucide.createIcons();
             refreshAllViews();
+            initCloudSyncFromStorage();
         });
+
+        function updateCloudStatusBadge(mode, labelText) {
+            const dot = document.getElementById('cloud-status-dot');
+            const text = document.getElementById('cloud-status-text');
+            const badge = document.getElementById('cloud-status-badge');
+            if (!dot || !text || !badge) return;
+
+            text.textContent = labelText;
+            if (mode === 'connected') {
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200';
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+            } else if (mode === 'error') {
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium bg-rose-50 text-rose-700 border border-rose-200';
+                dot.className = 'w-2 h-2 rounded-full bg-rose-500';
+            } else {
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-600';
+                dot.className = 'w-2 h-2 rounded-full bg-slate-400';
+            }
+        }
+
+        function initCloudSyncFromStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY_CLOUD);
+                if (!raw) {
+                    updateCloudStatusBadge('local', 'Local Mode (เครื่องนี้เท่านั้น)');
+                    return;
+                }
+                const cfg = JSON.parse(raw);
+                if (cfg && cfg.apiKey && cfg.projectId) {
+                    connectFirestore(cfg);
+                } else {
+                    updateCloudStatusBadge('local', 'Local Mode (เครื่องนี้เท่านั้น)');
+                }
+            } catch (e) {
+                console.error('Cloud config load error:', e);
+                updateCloudStatusBadge('error', 'Cloud Config ผิดพลาด');
+            }
+        }
+
+        function connectFirestore(cfg) {
+            try {
+                if (unsubscribeCloud) {
+                    unsubscribeCloud();
+                    unsubscribeCloud = null;
+                }
+
+                const roomId = (cfg.roomId || 'pacifica-weekend-it').trim();
+                const firebaseConfig = {
+                    apiKey: cfg.apiKey.trim(),
+                    projectId: cfg.projectId.trim(),
+                    authDomain: (cfg.authDomain || `${cfg.projectId.trim()}.firebaseapp.com`).trim(),
+                    appId: (cfg.appId || '').trim() || undefined
+                };
+
+                const appName = 'WeekendPortal_' + roomId.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const app = initializeApp(firebaseConfig, appName);
+                cloudDb = getFirestore(app);
+                cloudDocRef = doc(cloudDb, 'weekend_it_portals', roomId);
+
+                updateCloudStatusBadge('connected', `Cloud Live (${roomId})`);
+
+                // Subscribe to real-time updates across all devices
+                unsubscribeCloud = onSnapshot(
+                    cloudDocRef,
+                    (snap) => {
+                        if (snap.exists()) {
+                            const data = snap.data();
+                            isApplyingRemoteSnapshot = true;
+                            try {
+                                if (Array.isArray(data.cases)) {
+                                    cases = data.cases;
+                                    localStorage.setItem(STORAGE_KEY_CASES, JSON.stringify(cases));
+                                }
+                                if (data.meta) {
+                                    applyMetaToInputs(data.meta);
+                                    localStorage.setItem(STORAGE_KEY_META, JSON.stringify(data.meta));
+                                }
+                                refreshAllViews();
+                            } finally {
+                                isApplyingRemoteSnapshot = false;
+                            }
+                        } else {
+                            // First time connecting this room: push current local data up
+                            pushStateToCloud();
+                        }
+                    },
+                    (err) => {
+                        console.error('Firestore listener error:', err);
+                        updateCloudStatusBadge('error', 'Cloud เชื่อมต่อไม่ได้ (เช็ก Rules/Config)');
+                        showToast('เชื่อมต่อ Cloud ไม่สำเร็จ กรุณาตรวจสอบค่า Config และ Firestore Rules', 'info');
+                    }
+                );
+            } catch (e) {
+                console.error('Firebase init error:', e);
+                updateCloudStatusBadge('error', 'Firebase Config ไม่ถูกต้อง');
+            }
+        }
+
+        async function pushStateToCloud() {
+            if (!cloudDocRef || isApplyingRemoteSnapshot) return;
+            try {
+                const meta = getCurrentMetaObject();
+                await setDoc(cloudDocRef, {
+                    cases: cases,
+                    meta: meta,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+            } catch (e) {
+                console.error('Failed to push to cloud:', e);
+            }
+        }
+
+        function getCurrentMetaObject() {
+            return {
+                startDate: document.getElementById('meta-start-date').value,
+                endDate: document.getElementById('meta-end-date').value,
+                staff: document.getElementById('meta-staff').value,
+                recipient: document.getElementById('meta-recipient').value
+            };
+        }
+
+        function applyMetaToInputs(meta) {
+            if (meta.startDate !== undefined) document.getElementById('meta-start-date').value = meta.startDate;
+            if (meta.endDate !== undefined) document.getElementById('meta-end-date').value = meta.endDate;
+            if (meta.staff !== undefined) document.getElementById('meta-staff').value = meta.staff;
+            if (meta.recipient !== undefined) document.getElementById('meta-recipient').value = meta.recipient;
+            updatePeriodDisplayText();
+        }
+
+        function openCloudConfigModal() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY_CLOUD);
+                if (raw) {
+                    const cfg = JSON.parse(raw);
+                    document.getElementById('cloud-room-id').value = cfg.roomId || 'pacifica-weekend-it';
+                    document.getElementById('cloud-api-key').value = cfg.apiKey || '';
+                    document.getElementById('cloud-project-id').value = cfg.projectId || '';
+                    document.getElementById('cloud-auth-domain').value = cfg.authDomain || '';
+                    document.getElementById('cloud-app-id').value = cfg.appId || '';
+                }
+            } catch (e) {}
+            document.getElementById('cloud-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeCloudConfigModal() {
+            document.getElementById('cloud-modal').classList.add('hidden');
+        }
+
+        function handleSaveCloudConfig(e) {
+            e.preventDefault();
+            const cfg = {
+                roomId: document.getElementById('cloud-room-id').value.trim() || 'pacifica-weekend-it',
+                apiKey: document.getElementById('cloud-api-key').value.trim(),
+                projectId: document.getElementById('cloud-project-id').value.trim(),
+                authDomain: document.getElementById('cloud-auth-domain').value.trim(),
+                appId: document.getElementById('cloud-app-id').value.trim()
+            };
+            localStorage.setItem(STORAGE_KEY_CLOUD, JSON.stringify(cfg));
+            closeCloudConfigModal();
+            connectFirestore(cfg);
+            showToast('เปิดใช้งาน Cloud Sync แบบเรียลไทม์แล้ว', 'success');
+        }
+
+        function disableCloudSync() {
+            if (unsubscribeCloud) {
+                unsubscribeCloud();
+                unsubscribeCloud = null;
+            }
+            cloudDb = null;
+            cloudDocRef = null;
+            localStorage.removeItem(STORAGE_KEY_CLOUD);
+            updateCloudStatusBadge('local', 'Local Mode (เครื่องนี้เท่านั้น)');
+            closeCloudConfigModal();
+            showToast('ปิด Cloud Sync แล้ว กลับสู่โหมดบันทึกในเครื่องนี้', 'info');
+        }
 
         // Load data from localStorage or fallback to DEFAULT_CASES
         function loadData() {
@@ -724,7 +1006,6 @@
                     document.getElementById('meta-staff').value = meta.staff || 'Suwimol Pornpanom - IT SUPPORT';
                     document.getElementById('meta-recipient').value = meta.recipient || 'Sitthichai (Noom) Dumsup - IT MANAGER';
                 } else {
-                    // Default to sample weekend dates (21 - 22 Nov 2026)
                     document.getElementById('meta-start-date').value = '2026-11-21';
                     document.getElementById('meta-end-date').value = '2026-11-22';
                     document.getElementById('meta-staff').value = 'Suwimol Pornpanom - IT SUPPORT';
@@ -740,6 +1021,7 @@
         function saveCases() {
             try {
                 localStorage.setItem(STORAGE_KEY_CASES, JSON.stringify(cases));
+                pushStateToCloud();
             } catch (e) {
                 console.error('Failed to save cases:', e);
             }
@@ -747,13 +1029,9 @@
 
         function saveMetadata(silent = false) {
             try {
-                const meta = {
-                    startDate: document.getElementById('meta-start-date').value,
-                    endDate: document.getElementById('meta-end-date').value,
-                    staff: document.getElementById('meta-staff').value,
-                    recipient: document.getElementById('meta-recipient').value
-                };
+                const meta = getCurrentMetaObject();
                 localStorage.setItem(STORAGE_KEY_META, JSON.stringify(meta));
+                pushStateToCloud();
                 if (!silent) showToast('บันทึกข้อมูลหัวรายงานเรียบร้อย', 'success');
             } catch (e) {
                 console.error('Failed to save metadata:', e);
