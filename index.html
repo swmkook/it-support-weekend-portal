@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Support Weekend Portal — Pacifica Group & PlantDigi</title>
+    <!-- Google Fonts: Sarabun & Prompt for clean Thai enterprise UI -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for Interactive Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Sarabun', 'sans-serif'],
+                        display: ['Prompt', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        h1, h2, h3, .font-heading {
+            font-family: 'Prompt', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Print Styles for clean A4 PDF Report */
+        @media print {
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                font-size: 12px;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            #tab-caselog {
+                display: none !important;
+            }
+            #tab-summary {
+                display: block !important;
+            }
+            .card-shadow {
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+            .page-break-inside-avoid {
+                break-inside: avoid;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 12mm;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Toast Notification Container (No alert() used) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 no-print"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between py-3.5 gap-3">
+                <!-- Brand & Title -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-teal-600 p-2.5 rounded-xl shadow-inner flex items-center justify-center">
+                        <i data-lucide="headset" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">IT Support Weekend Portal</h1>
+                            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                                Pacifica Group & PlantDigi
+                            </span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-400">ระบบบันทึกเคสงานและสรุปรายงานปฏิบัติการวันเสาร์–อาทิตย์</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openCaseModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium bg-teal-600 hover:bg-teal-500 text-white shadow-sm transition cursor-pointer">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>เพิ่มเคสใหม่</span>
+                    </button>
+                    <button onclick="exportCSV()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer" title="ส่งออกไฟล์ตารางสำหรับเปิดใน Excel">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                        <span class="hidden sm:inline">Export Excel (.csv)</span>
+                    </button>
+                    <button onclick="printReport()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer" title="พิมพ์รายงานหรือบันทึกเป็น PDF">
+                        <i data-lucide="printer" class="w-4 h-4 text-sky-400"></i>
+                        <span class="hidden sm:inline">พิมพ์รายงาน / PDF</span>
+                    </button>
+                    <button onclick="confirmResetData()" class="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-medium bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-300 border border-slate-700 transition cursor-pointer" title="รีเซ็ตข้อมูลกลับเป็นค่าเริ่มต้น">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="flex space-x-2 border-t border-slate-800 pt-2">
+                <button id="btn-tab-summary" onclick="switchTab('summary')" class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 border-teal-500 text-teal-400 bg-slate-800/60 transition cursor-pointer">
+                    <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                    <span>หน้ารีพอทสรุปผล (Summary Report)</span>
+                </button>
+                <button id="btn-tab-caselog" onclick="switchTab('caselog')" class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition cursor-pointer">
+                    <i data-lucide="list-checks" class="w-4 h-4"></i>
+                    <span>ตารางบันทึกเคสงาน (Case Log)</span>
+                    <span id="nav-case-count" class="ml-1 px-2 py-0.5 text-xs rounded-full bg-slate-700 text-slate-200">5</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- =====================================================================
+             TAB 1: SUMMARY REPORT DASHBOARD (หน้ารีพอทสรุปผล)
+             ===================================================================== -->
+        <section id="tab-summary" class="space-y-6">
+
+            <!-- Print Header (Visible only when printing) -->
+            <div class="hidden print-only border-b-2 border-slate-800 pb-3 mb-4">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-900">รายงานสรุปการให้บริการด้าน IT (ช่วงวันเสาร์–อาทิตย์)</h1>
+                        <p class="text-sm text-slate-600">Pacifica Group & PlantDigi — IT Infrastructure & Retail Support</p>
+                    </div>
+                    <div class="text-right text-xs text-slate-500">
+                        <p>พิมพ์เมื่อ: <span id="print-timestamp"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Metadata Banner (Editable) -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm card-shadow">
+                <div class="flex items-center justify-between mb-3 no-print">
+                    <div class="flex items-center gap-2 text-slate-800 font-semibold">
+                        <i data-lucide="calendar-check" class="w-5 h-5 text-teal-600"></i>
+                        <h2 class="text-base">ข้อมูลหัวรายงาน (Report Header — คลิกแก้ไขข้อความได้)</h2>
+                    </div>
+                    <span class="text-xs text-slate-400 flex items-center gap-1">
+                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-500"></i> บันทึกอัตโนมัติในเครื่อง
+                    </span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/70">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-medium text-slate-500">ช่วงวันที่ (Start – End Date)</label>
+                            <button type="button" onclick="clearDateRangeFilter()" class="text-[11px] text-teal-600 hover:underline cursor-pointer no-print" title="แสดงเคสทั้งหมดโดยไม่จำกัดวันที่">แสดงทั้งหมด</button>
+                        </div>
+                        <div class="flex items-center gap-1.5 no-print">
+                            <input type="date" id="meta-start-date" onchange="handleDateRangeChange()" class="w-full bg-white border border-slate-200 font-medium text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 rounded-lg px-2 py-1.5 cursor-pointer">
+                            <span class="text-slate-400 text-xs font-bold">–</span>
+                            <input type="date" id="meta-end-date" onchange="handleDateRangeChange()" class="w-full bg-white border border-slate-200 font-medium text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 rounded-lg px-2 py-1.5 cursor-pointer">
+                        </div>
+                        <p id="meta-period-display" class="text-xs font-semibold text-teal-700 mt-1.5">21/11/2026 – 22/11/2026</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/70">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">ผู้ปฏิบัติงาน (On-Call IT Support)</label>
+                        <input type="text" id="meta-staff" onchange="saveMetadata()" class="w-full bg-transparent font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 rounded px-1" value="Suwimol Pornpanom - IT SUPPORT">
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/70">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">ผู้รับทราบรายงาน (Reported To)</label>
+                        <input type="text" id="meta-recipient" onchange="saveMetadata()" class="w-full bg-transparent font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 rounded px-1" value="Sitthichai (Noom) Dumsup - IT MANAGER">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4 KPI Overview Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 page-break-inside-avoid">
+                <!-- Total Cases -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm card-shadow flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-slate-500">จำนวนเคสทั้งหมด</p>
+                        <p id="kpi-total" class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1 font-heading">0</p>
+                        <p class="text-xs text-slate-400 mt-1">Total Weekend Tickets</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                        <i data-lucide="layers" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <!-- Closed Cases -->
+                <div class="bg-white rounded-2xl p-5 border border-emerald-200/80 shadow-sm card-shadow flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-emerald-700">แก้ไขเสร็จสิ้น (Closed)</p>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <p id="kpi-closed" class="text-2xl sm:text-3xl font-bold text-emerald-600 font-heading">0</p>
+                            <span id="kpi-closed-pct" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">0%</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">Resolved on Weekend</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="check-circle" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <!-- Monitoring Cases -->
+                <div class="bg-white rounded-2xl p-5 border border-amber-200/80 shadow-sm card-shadow flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-amber-700">รอติดตามผล (Monitoring)</p>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <p id="kpi-monitoring" class="text-2xl sm:text-3xl font-bold text-amber-600 font-heading">0</p>
+                            <span id="kpi-monitoring-pct" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">0%</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">Under Observation</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="eye" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <!-- Escalated Cases -->
+                <div class="bg-white rounded-2xl p-5 border border-rose-200/80 shadow-sm card-shadow flex items-center justify-between">
+                    <div>
+                        <p class="text-xs sm:text-sm font-medium text-rose-700">ส่งต่อ / รออะไหล่ (Escalated)</p>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <p id="kpi-escalated" class="text-2xl sm:text-3xl font-bold text-rose-600 font-heading">0</p>
+                            <span id="kpi-escalated-pct" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">0%</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">Vendor / Spare Parts</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts & Breakdown Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 page-break-inside-avoid">
+                <!-- Category Bar Chart -->
+                <div class="lg:col-span-2 bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm card-shadow flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">สรุปเคสแยกตามกลุ่มระบบงาน (Category Breakdown)</h3>
+                            <p class="text-xs text-slate-500">เปรียบเทียบปริมาณปัญหาที่เกิดขึ้นในแต่ละระบบ</p>
+                        </div>
+                        <span class="p-2 rounded-lg bg-teal-50 text-teal-600">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                        </span>
+                    </div>
+                    <div class="relative flex-1 min-h-[240px] w-full">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Location Doughnut Chart & Summary Table -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm card-shadow flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-800">สัดส่วนพื้นที่ให้บริการ</h3>
+                                <p class="text-xs text-slate-500">Corporate HQ vs Retail Stores</p>
+                            </div>
+                            <span class="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+                                <i data-lucide="store" class="w-5 h-5"></i>
+                            </span>
+                        </div>
+                        <div class="relative h-[180px] w-full flex items-center justify-center">
+                            <canvas id="locationChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Mini Breakdown List -->
+                    <div class="mt-4 pt-3 border-t border-slate-100 space-y-2 text-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-2 text-slate-600">
+                                <span class="w-3 h-3 rounded-full bg-teal-600 inline-block"></span>
+                                สาขาหน้าร้าน (Retail Stores)
+                            </span>
+                            <span id="loc-retail-stat" class="font-bold text-slate-800">0 เคส (0%)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-2 text-slate-600">
+                                <span class="w-3 h-3 rounded-full bg-slate-700 inline-block"></span>
+                                สำนักงานใหญ่ (Corporate HQ)
+                            </span>
+                            <span id="loc-hq-stat" class="font-bold text-slate-800">0 เคส (0%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Summary Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm card-shadow overflow-hidden page-break-inside-avoid">
+                <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="text-base font-bold text-slate-800">ตารางสรุปสัดส่วนตามหมวดหมู่ระบบงาน</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                <th class="py-3 px-5 font-semibold">กลุ่มระบบงาน (System Category)</th>
+                                <th class="py-3 px-4 font-semibold text-center">จำนวนเคส</th>
+                                <th class="py-3 px-4 font-semibold text-center">ปิดเคสแล้ว</th>
+                                <th class="py-3 px-4 font-semibold text-center">ค้างติดตาม/ส่งต่อ</th>
+                                <th class="py-3 px-5 font-semibold text-right">สัดส่วน (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="category-summary-tbody" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Monday Action Items / Follow-up Section -->
+            <div class="bg-white rounded-2xl border border-amber-200/90 shadow-sm card-shadow overflow-hidden page-break-inside-avoid">
+                <div class="px-5 py-4 bg-gradient-to-r from-amber-50 to-orange-50/40 border-b border-amber-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 rounded-lg bg-amber-100 text-amber-700">
+                            <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">เคสสำคัญที่ต้องติดตามต่อในวันจันทร์ (Monday Action Items / Follow-up)</h3>
+                            <p class="text-xs text-slate-600">ดึงรายการที่มีสถานะ <span class="font-semibold text-amber-700">Monitoring</span> และ <span class="font-semibold text-rose-700">Escalated</span> มาแสดงอัตโนมัติ</p>
+                        </div>
+                    </div>
+                    <span id="followup-badge" class="self-start sm:self-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                        0 รายการที่ต้องติดตาม
+                    </span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-50/80 text-slate-600 border-b border-slate-200">
+                                <th class="py-3 px-4 font-semibold w-28">Ticket ID</th>
+                                <th class="py-3 px-4 font-semibold w-48">สาขา / แผนก</th>
+                                <th class="py-3 px-4 font-semibold">รายละเอียดปัญหาที่พบ</th>
+                                <th class="py-3 px-4 font-semibold">การแก้ไขเบื้องต้น / แผนงานวันจันทร์</th>
+                                <th class="py-3 px-4 font-semibold w-32 text-center">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="followup-tbody" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- =====================================================================
+             TAB 2: CASE LOG MANAGER (ตารางบันทึกเคสงาน)
+             ===================================================================== -->
+        <section id="tab-caselog" class="hidden space-y-5">
+
+            <!-- Filter & Search Controls -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+                    <!-- Search Input -->
+                    <div class="relative flex-1 max-w-md">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="search-input" oninput="renderCaseTable()" placeholder="ค้นหา Ticket, สาขา, ผู้แจ้ง หรือรายละเอียดปัญหา..." class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+                    </div>
+
+                    <!-- Status Filter -->
+                    <select id="filter-status" onchange="renderCaseTable()" class="px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-700 cursor-pointer">
+                        <option value="ALL">สถานะทั้งหมด (All Status)</option>
+                        <option value="Closed">ปิดเคสแล้ว (Closed)</option>
+                        <option value="Monitoring">รอติดตามผล (Monitoring)</option>
+                        <option value="Escalated">ส่งต่อ / รออะไหล่ (Escalated)</option>
+                    </select>
+
+                    <!-- Category Filter -->
+                    <select id="filter-category" onchange="renderCaseTable()" class="px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-700 cursor-pointer">
+                        <option value="ALL">ทุกกลุ่มระบบงาน (All Categories)</option>
+                        <option value="POS">POS</option>
+                        <option value="Hardware">Hardware</option>
+                        <option value="Software">Software</option>
+                        <option value="Network">Network</option>
+                        <option value="CCTV">CCTV</option>
+                        <option value="Traffic">Traffic</option>
+                    </select>
+                </div>
+
+                <button onclick="openCaseModal()" class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-teal-600 hover:bg-teal-500 text-white shadow-sm transition cursor-pointer shrink-0">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>บันทึกเคสใหม่</span>
+                </button>
+            </div>
+
+            <!-- Interactive Case Table -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-800 text-slate-100">
+                                <th class="py-3.5 px-4 font-semibold whitespace-nowrap">วัน/เวลา</th>
+                                <th class="py-3.5 px-4 font-semibold whitespace-nowrap">Ticket ID</th>
+                                <th class="py-3.5 px-4 font-semibold">สาขา / แผนก</th>
+                                <th class="py-3.5 px-4 font-semibold">กลุ่มระบบงาน</th>
+                                <th class="py-3.5 px-4 font-semibold min-w-[200px]">รายละเอียดปัญหา (Issue)</th>
+                                <th class="py-3.5 px-4 font-semibold min-w-[200px]">การแก้ไข (Resolution)</th>
+                                <th class="py-3.5 px-4 font-semibold text-center whitespace-nowrap">สถานะ (เปลี่ยนด่วน)</th>
+                                <th class="py-3.5 px-4 font-semibold text-center whitespace-nowrap">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="caselog-tbody" class="divide-y divide-slate-200/70">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="empty-caselog-state" class="hidden py-12 text-center text-slate-400">
+                    <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i>
+                    <p class="text-base font-medium text-slate-600">ไม่พบรายการเคสที่ค้นหา</p>
+                    <p class="text-xs mt-1">ลองเปลี่ยนคำค้นหาหรือกดปุ่ม "+ เพิ่มเคสใหม่" เพื่อบันทึกรายการ</p>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <p>IT Support Weekend Portal — Designed for <strong>Pacifica Group & PlantDigi</strong></p>
+            <p>ข้อมูลทั้งหมดถูกจัดเก็บในเบราว์เซอร์ของคุณ (Local Storage) สามารถเปิดใช้งานแบบ Offline ได้ 100%</p>
+        </div>
+    </footer>
+
+    <!-- =====================================================================
+         MODAL: ADD / EDIT CASE FORM
+         ===================================================================== -->
+    <div id="case-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto no-print">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden my-8 animate-fade-in">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-1.5 rounded-lg bg-teal-600">
+                        <i data-lucide="file-plus-2" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <h3 id="modal-title" class="text-lg font-bold">บันทึกเคสงานใหม่ (Add New Case)</h3>
+                </div>
+                <button onclick="closeCaseModal()" class="text-slate-400 hover:text-white p-1 rounded-lg transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="case-form" onsubmit="handleCaseSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="form-id">
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">วัน/เวลาที่แจ้ง *</label>
+                        <input type="text" id="form-datetime" required placeholder="เช่น ส. 21/11 10:15" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">เลขที่ Ticket (GLPI) *</label>
+                        <input type="text" id="form-ticket" required placeholder="เช่น #2611-006" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">ผู้รับผิดชอบ</label>
+                        <input type="text" id="form-assignee" value="เก้อ" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">สาขา / แผนก (เลือกหรือพิมพ์เอง) *</label>
+                        <input type="text" id="form-branch" list="branch-suggestions" required placeholder="เช่น Coach - Siam Paragon หรือ HQ - ชั้น 20" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <datalist id="branch-suggestions">
+                            <option value="Coach - Siam Paragon">
+                            <option value="AEO - CentralWorld">
+                            <option value="Birkenstock - Zpell Rangsit">
+                            <option value="TAG Heuer - Gaysorn Village">
+                            <option value="Kate Spade - CentralWorld">
+                            <option value="APM Monaco - Maya Chiang Mai">
+                            <option value="HQ - ชั้น 5 (PlantDigi / Digital)">
+                            <option value="HQ - ชั้น 20 (Accounting / Finance)">
+                            <option value="HQ - ชั้น 21 (Management / HR)">
+                        </datalist>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">ผู้แจ้ง / เบอร์ติดต่อ</label>
+                        <input type="text" id="form-reporter" placeholder="เช่น คุณเอ (08x-xxx-xxxx)" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">กลุ่มระบบงาน (Category) *</label>
+                        <select id="form-category" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                            <option value="POS">POS</option>
+                            <option value="Hardware">Hardware</option>
+                            <option value="Software">Software</option>
+                            <option value="Network">Network</option>
+                            <option value="CCTV">CCTV</option>
+                            <option value="Traffic">Traffic</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">สถานะการดำเนินงาน (Status) *</label>
+                        <select id="form-status" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                            <option value="Closed">Closed (แก้ไขเสร็จสิ้น)</option>
+                            <option value="Monitoring">Monitoring (รอติดตามผลต่อเนื่อง)</option>
+                            <option value="Escalated">Escalated (ส่งต่อ Vendor / รออะไหล่)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">รายละเอียดปัญหาที่พบ (Issue Description) *</label>
+                    <textarea id="form-issue" rows="2" required placeholder="ระบุอาการเสีย หรือปัญหาที่ผู้ใช้งานแจ้ง..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">การแก้ไขปัญหา / แผนงานติดตามต่อ (Resolution & Next Action) *</label>
+                    <textarea id="form-resolution" rows="2" required placeholder="ระบุขั้นตอนการแก้ไข หรือนัดหมายกับ Vendor ในวันจันทร์..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"></textarea>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="closeCaseModal()" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-500 rounded-xl shadow-sm transition cursor-pointer">
+                        บันทึกข้อมูลเคส
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         CONFIRMATION MODAL (Replaces confirm() dialog)
+         ===================================================================== -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6">
+            <div class="flex items-center gap-3 text-rose-600 mb-3">
+                <div class="p-2 rounded-full bg-rose-100">
+                    <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                </div>
+                <h3 id="confirm-title" class="text-lg font-bold text-slate-800">ยืนยันการทำรายการ</h3>
+            </div>
+            <p id="confirm-message" class="text-sm text-slate-600 mb-6">คุณต้องการดำเนินการนี้ใช่หรือไม่?</p>
+            <div class="flex justify-end gap-2.5">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">ยกเลิก</button>
+                <button id="confirm-btn-yes" class="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition cursor-pointer">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         APPLICATION LOGIC (JavaScript)
+         ===================================================================== -->
+    <script>
+        // Storage Keys (bumped to v3 so new default staff & recipient apply immediately)
+        const STORAGE_KEY_CASES = 'pacifica_it_weekend_cases_v3';
+        const STORAGE_KEY_META = 'pacifica_it_weekend_meta_v3';
+
+        // Default Sample Data tailored to Pacifica Group & PlantDigi (6 Categories)
+        const DEFAULT_CASES = [
+            {
+                id: 'c1',
+                datetime: 'ส. 21/11 10:15',
+                ticket: '#2611-001',
+                branch: 'Coach - Siam Paragon',
+                reporter: 'คุณเอ (081-234-5678)',
+                category: 'POS',
+                issue: 'โปรแกรมขายหน้าร้าน Cegid Y2 ค้างระหว่างปิดบิล และเครื่องพิมพ์ใบเสร็จขึ้นสถานะ Offline',
+                resolution: 'รีสตาร์ทบริการ Cegid POS Service และ Print Spooler พร้อมตรวจสอบ Virtual COM Port ทดสอบขายใช้งานได้ปกติ',
+                status: 'Closed',
+                assignee: 'เก้อ'
+            },
+            {
+                id: 'c2',
+                datetime: 'ส. 21/11 14:30',
+                ticket: '#2611-002',
+                branch: 'AEO - CentralWorld',
+                reporter: 'คุณบี (089-876-5432)',
+                category: 'Network',
+                issue: 'สัญญาณอินเทอร์เน็ต Wi-Fi หน้าร้านหลุดบ่อย ทำให้เครื่อง iPad เช็กสต็อกช้า',
+                resolution: 'รีบูต Router (Ruijie RG-EW1300G) และปรับช่องสัญญาณเบื้องต้น นัด Vendor เข้าตรวจสาย LAN วันจันทร์ 10:00 น.',
+                status: 'Monitoring',
+                assignee: 'เก้อ'
+            },
+            {
+                id: 'c3',
+                datetime: 'ส. 21/11 16:45',
+                ticket: '#2611-003',
+                branch: 'Birkenstock - Zpell Rangsit',
+                reporter: 'คุณนุ่น (086-555-1212)',
+                category: 'Hardware',
+                issue: 'เครื่องสแกนบาร์โค้ดไร้สาย (Zebra) สแกนสินค้าไม่ติด แบตเตอรี่เสื่อมชาร์จไม่เข้า',
+                resolution: 'แนะนำให้สลับใช้เครื่องสำรองที่เคาน์เตอร์ชั่วคราว และเปิดใบเบิกส่งเคลม/เปลี่ยนแบตเตอรี่ใหม่วันจันทร์',
+                status: 'Escalated',
+                assignee: 'เก้อ'
+            },
+            {
+                id: 'c4',
+                datetime: 'อา. 22/11 11:00',
+                ticket: '#2611-004',
+                branch: 'HQ - ชั้น 20 (Accounting)',
+                reporter: 'คุณกิ๊ฟ (บัญชี)',
+                category: 'Software',
+                issue: 'เข้าใช้งาน Microsoft 365 / Outlook ไม่ได้ ติดหน้ายืนยันตัวตน MFA หลังเปลี่ยนโทรศัพท์ใหม่',
+                resolution: 'ทำการ Revoke & Reset MFA ใน Entra ID (Azure AD) และแนะนำการลงทะเบียน Microsoft Authenticator ใหม่เรียบร้อย',
+                status: 'Closed',
+                assignee: 'เก้อ'
+            },
+            {
+                id: 'c5',
+                datetime: 'อา. 22/11 13:40',
+                ticket: '#2611-005',
+                branch: 'TAG Heuer - Gaysorn Village',
+                reporter: 'คุณป๊อป (Store Mgr)',
+                category: 'CCTV',
+                issue: 'กล้องวงจรปิดโซนเคาน์เตอร์โชว์สินค้าไม่แสดงภาพบนหน้าจอมอนิเตอร์หลังร้าน',
+                resolution: 'ตรวจสอบสวิตช์ PoE และรีบูตเครื่องบันทึก NVR ภาพกลับมาออนไลน์ครบทุกช่องสัญญาณปกติ',
+                status: 'Closed',
+                assignee: 'เก้อ'
+            },
+            {
+                id: 'c6',
+                datetime: 'อา. 22/11 15:20',
+                ticket: '#2611-006',
+                branch: 'Kate Spade - CentralWorld',
+                reporter: 'คุณเมย์ (085-444-9988)',
+                category: 'Traffic',
+                issue: 'ตัวนับจำนวนลูกค้าเข้า-ออกหน้าร้าน (Traffic Counter Sensor) ไม่ส่งข้อมูลยอดเข้า Dashboard',
+                resolution: 'รีสตาร์ทตัวส่งสัญญาณ PoE Sensor และตรวจสอบการเชื่อมต่อ Cloud API ข้อมูลเริ่มอัปเดตแล้ว รอเช็กยอดเทียบวันจันทร์',
+                status: 'Monitoring',
+                assignee: 'เก้อ'
+            }
+        ];
+
+        const CATEGORIES = [
+            'POS',
+            'Hardware',
+            'Software',
+            'Network',
+            'CCTV',
+            'Traffic'
+        ];
+
+        // Distinct badge styles for each of the 6 categories
+        const CATEGORY_BADGE_STYLES = {
+            'POS': 'bg-teal-50 text-teal-700 border-teal-200',
+            'Hardware': 'bg-amber-50 text-amber-700 border-amber-200',
+            'Software': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+            'Network': 'bg-sky-50 text-sky-700 border-sky-200',
+            'CCTV': 'bg-purple-50 text-purple-700 border-purple-200',
+            'Traffic': 'bg-rose-50 text-rose-700 border-rose-200'
+        };
+
+        // Global State
+        let cases = [];
+        let categoryChartInstance = null;
+        let locationChartInstance = null;
+
+        // Initialize App on Load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            lucide.createIcons();
+            refreshAllViews();
+        });
+
+        // Load data from localStorage or fallback to DEFAULT_CASES
+        function loadData() {
+            try {
+                const storedCases = localStorage.getItem(STORAGE_KEY_CASES);
+                if (storedCases) {
+                    cases = JSON.parse(storedCases);
+                } else {
+                    cases = JSON.parse(JSON.stringify(DEFAULT_CASES));
+                    saveCases();
+                }
+
+                const storedMeta = localStorage.getItem(STORAGE_KEY_META);
+                if (storedMeta) {
+                    const meta = JSON.parse(storedMeta);
+                    if (meta.startDate !== undefined) document.getElementById('meta-start-date').value = meta.startDate;
+                    if (meta.endDate !== undefined) document.getElementById('meta-end-date').value = meta.endDate;
+                    document.getElementById('meta-staff').value = meta.staff || 'Suwimol Pornpanom - IT SUPPORT';
+                    document.getElementById('meta-recipient').value = meta.recipient || 'Sitthichai (Noom) Dumsup - IT MANAGER';
+                } else {
+                    // Default to sample weekend dates (21 - 22 Nov 2026)
+                    document.getElementById('meta-start-date').value = '2026-11-21';
+                    document.getElementById('meta-end-date').value = '2026-11-22';
+                    document.getElementById('meta-staff').value = 'Suwimol Pornpanom - IT SUPPORT';
+                    document.getElementById('meta-recipient').value = 'Sitthichai (Noom) Dumsup - IT MANAGER';
+                }
+                updatePeriodDisplayText();
+            } catch (e) {
+                console.error('Storage error:', e);
+                cases = JSON.parse(JSON.stringify(DEFAULT_CASES));
+            }
+        }
+
+        function saveCases() {
+            try {
+                localStorage.setItem(STORAGE_KEY_CASES, JSON.stringify(cases));
+            } catch (e) {
+                console.error('Failed to save cases:', e);
+            }
+        }
+
+        function saveMetadata(silent = false) {
+            try {
+                const meta = {
+                    startDate: document.getElementById('meta-start-date').value,
+                    endDate: document.getElementById('meta-end-date').value,
+                    staff: document.getElementById('meta-staff').value,
+                    recipient: document.getElementById('meta-recipient').value
+                };
+                localStorage.setItem(STORAGE_KEY_META, JSON.stringify(meta));
+                if (!silent) showToast('บันทึกข้อมูลหัวรายงานเรียบร้อย', 'success');
+            } catch (e) {
+                console.error('Failed to save metadata:', e);
+            }
+        }
+
+        // Date Range Helpers for Summary Report
+        function handleDateRangeChange() {
+            updatePeriodDisplayText();
+            saveMetadata(true);
+            renderSummaryDashboard();
+            showToast('อัปเดตข้อมูลรายงานตามช่วงวันที่ที่เลือกแล้ว', 'success');
+        }
+
+        function clearDateRangeFilter() {
+            document.getElementById('meta-start-date').value = '';
+            document.getElementById('meta-end-date').value = '';
+            updatePeriodDisplayText();
+            saveMetadata(true);
+            renderSummaryDashboard();
+            showToast('แสดงสรุปผลเคสทั้งหมด (ไม่จำกัดช่วงวันที่)', 'info');
+        }
+
+        function formatThaiDateLabel(isoStr) {
+            if (!isoStr) return '';
+            const [y, m, d] = isoStr.split('-');
+            return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+        }
+
+        function updatePeriodDisplayText() {
+            const startVal = document.getElementById('meta-start-date').value;
+            const endVal = document.getElementById('meta-end-date').value;
+            const displayEl = document.getElementById('meta-period-display');
+            if (!displayEl) return;
+
+            if (startVal && endVal) {
+                displayEl.textContent = `${formatThaiDateLabel(startVal)} – ${formatThaiDateLabel(endVal)}`;
+            } else if (startVal) {
+                displayEl.textContent = `ตั้งแต่ ${formatThaiDateLabel(startVal)}`;
+            } else if (endVal) {
+                displayEl.textContent = `ถึง ${formatThaiDateLabel(endVal)}`;
+            } else {
+                displayEl.textContent = 'ทั้งหมด (All Dates)';
+            }
+        }
+
+        // Parse case datetime string (e.g., "ส. 21/11 10:15" or "21/11/2026") to YYYY-MM-DD
+        function parseCaseDateToISO(dtStr, fallbackYear = '2026') {
+            if (!dtStr) return null;
+            const fullMatch = dtStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (fullMatch) {
+                return `${fullMatch[3]}-${fullMatch[2].padStart(2, '0')}-${fullMatch[1].padStart(2, '0')}`;
+            }
+            const shortMatch = dtStr.match(/(\d{1,2})\/(\d{1,2})/);
+            if (shortMatch) {
+                return `${fallbackYear}-${shortMatch[2].padStart(2, '0')}-${shortMatch[1].padStart(2, '0')}`;
+            }
+            return null;
+        }
+
+        // Filter cases based on Summary Report start/end date inputs
+        function getReportFilteredCases() {
+            const startVal = document.getElementById('meta-start-date')?.value || '';
+            const endVal = document.getElementById('meta-end-date')?.value || '';
+            if (!startVal && !endVal) return cases;
+
+            const refYear = (startVal || endVal).split('-')[0] || '2026';
+            return cases.filter(c => {
+                const cDate = parseCaseDateToISO(c.datetime, refYear);
+                if (!cDate) return true;
+                if (startVal && cDate < startVal) return false;
+                if (endVal && cDate > endVal) return false;
+                return true;
+            });
+        }
+
+        // Tab Switching
+        function switchTab(tabName) {
+            const summarySec = document.getElementById('tab-summary');
+            const caselogSec = document.getElementById('tab-caselog');
+            const btnSummary = document.getElementById('btn-tab-summary');
+            const btnCaselog = document.getElementById('btn-tab-caselog');
+
+            if (tabName === 'summary') {
+                summarySec.classList.remove('hidden');
+                caselogSec.classList.add('hidden');
+
+                btnSummary.className = 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 border-teal-500 text-teal-400 bg-slate-800/60 transition cursor-pointer';
+                btnCaselog.className = 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition cursor-pointer';
+                renderSummaryDashboard();
+            } else {
+                summarySec.classList.add('hidden');
+                caselogSec.classList.remove('hidden');
+
+                btnCaselog.className = 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 border-teal-500 text-teal-400 bg-slate-800/60 transition cursor-pointer';
+                btnSummary.className = 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition cursor-pointer';
+                renderCaseTable();
+            }
+        }
+
+        function refreshAllViews() {
+            document.getElementById('nav-case-count').textContent = cases.length;
+            renderSummaryDashboard();
+            renderCaseTable();
+        }
+
+        // Render Summary Report Dashboard (KPIs, Charts, Category Table, Follow-up List)
+        function renderSummaryDashboard() {
+            const reportCases = getReportFilteredCases();
+            const total = reportCases.length;
+            const closed = reportCases.filter(c => c.status === 'Closed').length;
+            const monitoring = reportCases.filter(c => c.status === 'Monitoring').length;
+            const escalated = reportCases.filter(c => c.status === 'Escalated').length;
+
+            const pct = (val) => total > 0 ? Math.round((val / total) * 100) + '%' : '0%';
+
+            document.getElementById('kpi-total').textContent = total;
+            document.getElementById('kpi-closed').textContent = closed;
+            document.getElementById('kpi-closed-pct').textContent = pct(closed);
+            document.getElementById('kpi-monitoring').textContent = monitoring;
+            document.getElementById('kpi-monitoring-pct').textContent = pct(monitoring);
+            document.getElementById('kpi-escalated').textContent = escalated;
+            document.getElementById('kpi-escalated-pct').textContent = pct(escalated);
+
+            // Category Breakdown
+            const catCounts = CATEGORIES.map(cat => reportCases.filter(c => c.category === cat).length);
+            const tbodyCat = document.getElementById('category-summary-tbody');
+            tbodyCat.innerHTML = '';
+
+            CATEGORIES.forEach((cat, idx) => {
+                const count = catCounts[idx];
+                const catClosed = reportCases.filter(c => c.category === cat && c.status === 'Closed').length;
+                const catPending = count - catClosed;
+                const share = total > 0 ? ((count / total) * 100).toFixed(1) + '%' : '0.0%';
+                const badgeCls = CATEGORY_BADGE_STYLES[cat] || 'bg-slate-100 text-slate-700 border-slate-200';
+
+                tbodyCat.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 px-5">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${badgeCls}">${cat}</span>
+                        </td>
+                        <td class="py-3 px-4 text-center font-bold text-slate-800">${count}</td>
+                        <td class="py-3 px-4 text-center text-emerald-600 font-medium">${catClosed}</td>
+                        <td class="py-3 px-4 text-center text-amber-600 font-medium">${catPending}</td>
+                        <td class="py-3 px-5 text-right font-semibold text-slate-700">${share}</td>
+                    </tr>
+                `;
+            });
+
+            // Total Footer Row
+            tbodyCat.innerHTML += `
+                <tr class="bg-slate-100/90 font-bold text-slate-900 border-t-2 border-slate-200">
+                    <td class="py-3 px-5">รวมทั้งหมด (Total)</td>
+                    <td class="py-3 px-4 text-center">${total}</td>
+                    <td class="py-3 px-4 text-center text-emerald-700">${closed}</td>
+                    <td class="py-3 px-4 text-center text-amber-700">${monitoring + escalated}</td>
+                    <td class="py-3 px-5 text-right">${total > 0 ? '100.0%' : '0.0%'}</td>
+                </tr>
+            `;
+
+            // Location Breakdown (HQ vs Retail Stores)
+            const hqCount = reportCases.filter(c => c.branch.trim().toUpperCase().startsWith('HQ')).length;
+            const retailCount = total - hqCount;
+            document.getElementById('loc-retail-stat').textContent = `${retailCount} เคส (${pct(retailCount)})`;
+            document.getElementById('loc-hq-stat').textContent = `${hqCount} เคส (${pct(hqCount)})`;
+
+            // Render Charts
+            renderCharts(catCounts, retailCount, hqCount);
+
+            // Render Monday Follow-up List
+            const followups = reportCases.filter(c => c.status === 'Monitoring' || c.status === 'Escalated');
+            document.getElementById('followup-badge').textContent = `${followups.length} รายการที่ต้องติดตาม`;
+            const tbodyFollow = document.getElementById('followup-tbody');
+            tbodyFollow.innerHTML = '';
+
+            if (followups.length === 0) {
+                tbodyFollow.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-6 text-center text-slate-400 text-sm">
+                            ไม่มีเคสค้างติดตามในช่วงวันที่เลือก (แก้ไขเสร็จสิ้นทั้งหมดแล้ว)
+                        </td>
+                    </tr>
+                `;
+            } else {
+                followups.forEach(item => {
+                    const statusBadge = item.status === 'Escalated'
+                        ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800">Escalated</span>`
+                        : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Monitoring</span>`;
+
+                    tbodyFollow.innerHTML += `
+                        <tr class="hover:bg-amber-50/30 transition">
+                            <td class="py-3 px-4 font-semibold text-slate-800 whitespace-nowrap">${escapeHTML(item.ticket)}</td>
+                            <td class="py-3 px-4 font-medium text-slate-700">${escapeHTML(item.branch)}</td>
+                            <td class="py-3 px-4 text-slate-600">${escapeHTML(item.issue)}</td>
+                            <td class="py-3 px-4 text-slate-700">${escapeHTML(item.resolution)}</td>
+                            <td class="py-3 px-4 text-center">${statusBadge}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function renderCharts(catCounts, retailCount, hqCount) {
+            const catCtx = document.getElementById('categoryChart');
+            if (catCtx) {
+                if (categoryChartInstance) categoryChartInstance.destroy();
+                categoryChartInstance = new Chart(catCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: CATEGORIES,
+                        datasets: [{
+                            label: 'จำนวนเคส',
+                            data: catCounts,
+                            backgroundColor: ['#0d9488', '#f59e0b', '#6366f1', '#0ea5e9', '#a855f7', '#f43f5e'],
+                            borderRadius: 8,
+                            maxBarThickness: 42
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            const locCtx = document.getElementById('locationChart');
+            if (locCtx) {
+                if (locationChartInstance) locationChartInstance.destroy();
+                locationChartInstance = new Chart(locCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Retail Stores', 'Corporate HQ'],
+                        datasets: [{
+                            data: [retailCount, hqCount],
+                            backgroundColor: ['#0d9488', '#334155'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        }
+
+        // Render Interactive Case Log Table
+        function renderCaseTable() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('filter-status').value;
+            const catFilter = document.getElementById('filter-category').value;
+
+            const filtered = cases.filter(c => {
+                const matchStatus = statusFilter === 'ALL' || c.status === statusFilter;
+                const matchCat = catFilter === 'ALL' || c.category === catFilter;
+                const matchSearch = !searchTerm || [c.ticket, c.branch, c.reporter, c.issue, c.resolution, c.datetime]
+                    .some(field => (field || '').toLowerCase().includes(searchTerm));
+                return matchStatus && matchCat && matchSearch;
+            });
+
+            const tbody = document.getElementById('caselog-tbody');
+            const emptyState = document.getElementById('empty-caselog-state');
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            filtered.forEach(item => {
+                const badgeCls = CATEGORY_BADGE_STYLES[item.category] || 'bg-slate-100 text-slate-700 border-slate-200';
+                const statusSelectBg = item.status === 'Closed'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : item.status === 'Monitoring'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-rose-50 text-rose-700 border-rose-200';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/90 transition align-top">
+                        <td class="py-3.5 px-4 whitespace-nowrap text-slate-600 font-medium">${escapeHTML(item.datetime)}</td>
+                        <td class="py-3.5 px-4 whitespace-nowrap font-bold text-slate-800">${escapeHTML(item.ticket)}</td>
+                        <td class="py-3.5 px-4">
+                            <div class="font-semibold text-slate-800">${escapeHTML(item.branch)}</div>
+                            <div class="text-xs text-slate-400 mt-0.5">${escapeHTML(item.reporter || '-')}</div>
+                        </td>
+                        <td class="py-3.5 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${badgeCls}">${escapeHTML(item.category)}</span>
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-700">${escapeHTML(item.issue)}</td>
+                        <td class="py-3.5 px-4 text-slate-600">${escapeHTML(item.resolution)}</td>
+                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                            <select onchange="quickChangeStatus('${item.id}', this.value)" class="px-2.5 py-1 text-xs font-semibold rounded-full border cursor-pointer focus:outline-none ${statusSelectBg}">
+                                <option value="Closed" ${item.status === 'Closed' ? 'selected' : ''}>Closed</option>
+                                <option value="Monitoring" ${item.status === 'Monitoring' ? 'selected' : ''}>Monitoring</option>
+                                <option value="Escalated" ${item.status === 'Escalated' ? 'selected' : ''}>Escalated</option>
+                            </select>
+                        </td>
+                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                            <div class="inline-flex items-center gap-1">
+                                <button onclick="openCaseModal('${item.id}')" class="p-1.5 text-slate-500 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition cursor-pointer" title="แก้ไขเคส">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="confirmDeleteCase('${item.id}')" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer" title="ลบเคส">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        function quickChangeStatus(id, newStatus) {
+            const idx = cases.findIndex(c => c.id === id);
+            if (idx !== -1) {
+                cases[idx].status = newStatus;
+                saveCases();
+                refreshAllViews();
+                showToast(`อัปเดตสถานะ ${cases[idx].ticket} เป็น ${newStatus}`, 'success');
+            }
+        }
+
+        // Modal Handlers
+        function openCaseModal(id = null) {
+            const modal = document.getElementById('case-modal');
+            const titleEl = document.getElementById('modal-title');
+            document.getElementById('case-form').reset();
+
+            if (id) {
+                const item = cases.find(c => c.id === id);
+                if (!item) return;
+                titleEl.textContent = `แก้ไขข้อมูลเคส (${item.ticket})`;
+                document.getElementById('form-id').value = item.id;
+                document.getElementById('form-datetime').value = item.datetime;
+                document.getElementById('form-ticket').value = item.ticket;
+                document.getElementById('form-assignee').value = item.assignee || 'เก้อ';
+                document.getElementById('form-branch').value = item.branch;
+                document.getElementById('form-reporter').value = item.reporter || '';
+                document.getElementById('form-category').value = item.category;
+                document.getElementById('form-status').value = item.status;
+                document.getElementById('form-issue').value = item.issue;
+                document.getElementById('form-resolution').value = item.resolution;
+            } else {
+                titleEl.textContent = 'บันทึกเคสงานใหม่ (Add New Case)';
+                document.getElementById('form-id').value = '';
+                const now = new Date();
+                const dayPrefix = now.getDay() === 0 ? 'อา.' : 'ส.';
+                const dd = String(now.getDate()).padStart(2, '0');
+                const mm = String(now.getMonth() + 1).padStart(2, '0');
+                const hh = String(now.getHours()).padStart(2, '0');
+                const min = String(now.getMinutes()).padStart(2, '0');
+                document.getElementById('form-datetime').value = `${dayPrefix} ${dd}/${mm} ${hh}:${min}`;
+                document.getElementById('form-ticket').value = `#2611-${String(cases.length + 1).padStart(3, '0')}`;
+                document.getElementById('form-assignee').value = 'เก้อ';
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeCaseModal() {
+            document.getElementById('case-modal').classList.add('hidden');
+        }
+
+        function handleCaseSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('form-id').value;
+            const payload = {
+                id: id || 'c_' + Date.now(),
+                datetime: document.getElementById('form-datetime').value.trim(),
+                ticket: document.getElementById('form-ticket').value.trim(),
+                assignee: document.getElementById('form-assignee').value.trim() || 'เก้อ',
+                branch: document.getElementById('form-branch').value.trim(),
+                reporter: document.getElementById('form-reporter').value.trim(),
+                category: document.getElementById('form-category').value,
+                status: document.getElementById('form-status').value,
+                issue: document.getElementById('form-issue').value.trim(),
+                resolution: document.getElementById('form-resolution').value.trim()
+            };
+
+            if (id) {
+                const idx = cases.findIndex(c => c.id === id);
+                if (idx !== -1) cases[idx] = payload;
+                showToast(`แก้ไขเคส ${payload.ticket} เรียบร้อย`, 'success');
+            } else {
+                cases.unshift(payload);
+                showToast(`เพิ่มเคส ${payload.ticket} เรียบร้อย`, 'success');
+            }
+
+            saveCases();
+            refreshAllViews();
+            closeCaseModal();
+        }
+
+        // Confirmation Dialog Handlers
+        function confirmDeleteCase(id) {
+            const item = cases.find(c => c.id === id);
+            if (!item) return;
+            document.getElementById('confirm-title').textContent = 'ยืนยันการลบเคสงาน';
+            document.getElementById('confirm-message').textContent = `คุณต้องการลบรายการ ${item.ticket} (${item.branch}) ออกจากระบบใช่หรือไม่?`;
+            const yesBtn = document.getElementById('confirm-btn-yes');
+            yesBtn.onclick = () => {
+                cases = cases.filter(c => c.id !== id);
+                saveCases();
+                refreshAllViews();
+                closeConfirmModal();
+                showToast(`ลบเคส ${item.ticket} เรียบร้อยแล้ว`, 'info');
+            };
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function confirmResetData() {
+            document.getElementById('confirm-title').textContent = 'รีเซ็ตข้อมูลกลับเป็นค่าเริ่มต้น';
+            document.getElementById('confirm-message').textContent = 'ข้อมูลเคสที่เพิ่มหรือแก้ไขไว้จะถูกล้างและกลับไปใช้ข้อมูลตัวอย่างเริ่มต้น ยืนยันหรือไม่?';
+            const yesBtn = document.getElementById('confirm-btn-yes');
+            yesBtn.onclick = () => {
+                localStorage.removeItem(STORAGE_KEY_CASES);
+                localStorage.removeItem(STORAGE_KEY_META);
+                cases = JSON.parse(JSON.stringify(DEFAULT_CASES));
+                document.getElementById('meta-start-date').value = '2026-11-21';
+                document.getElementById('meta-end-date').value = '2026-11-22';
+                document.getElementById('meta-staff').value = 'Suwimol Pornpanom - IT SUPPORT';
+                document.getElementById('meta-recipient').value = 'Sitthichai (Noom) Dumsup - IT MANAGER';
+                updatePeriodDisplayText();
+                saveCases();
+                saveMetadata(true);
+                refreshAllViews();
+                closeConfirmModal();
+                showToast('รีเซ็ตข้อมูลกลับเป็นค่าเริ่มต้นเรียบร้อย', 'success');
+            };
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+
+        // Export CSV for Excel
+        function exportCSV() {
+            const headers = ['Date/Time', 'Ticket ID', 'Branch / Dept', 'Reporter', 'Category', 'Issue', 'Resolution', 'Status', 'Assignee'];
+            const rows = cases.map(c => [
+                c.datetime, c.ticket, c.branch, c.reporter, c.category, c.issue, c.resolution, c.status, c.assignee
+            ].map(val => `"${String(val || '').replace(/"/g, '""')}"`).join(','));
+
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Weekend_IT_Support_Cases_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showToast('ดาวน์โหลดไฟล์ Excel (.csv) เรียบร้อย', 'success');
+        }
+
+        // Print / Save as PDF
+        function printReport() {
+            switchTab('summary');
+            const now = new Date();
+            const ts = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            document.getElementById('print-timestamp').textContent = ts;
+            setTimeout(() => window.print(), 250);
+        }
+
+        // Toast Notification Helper
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = type === 'success'
+                ? 'bg-slate-900 text-white border-teal-500'
+                : 'bg-slate-800 text-slate-100 border-slate-600';
+            toast.className = `px-4 py-3 rounded-xl shadow-lg border-l-4 text-sm font-medium flex items-center gap-2 transition-all ${colors}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2800);
+        }
+
+        function escapeHTML(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>
